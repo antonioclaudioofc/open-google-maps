@@ -1,16 +1,39 @@
 import subprocess
+import threading
 import time
+import tkinter as tk
 
 import cv2
 import easyocr
+import keyboard
 import mss
 import numpy as np
 import pyautogui
 
+import shutil
 
-CHROME_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+
+def get_chrome_path():
+
+    possible_paths = [
+        shutil.which("chrome"),
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    ]
+
+    for path in possible_paths:
+        if path:
+            return path
+
+    return None
+
+
+CHROME_PATH = get_chrome_path()
+pyautogui.FAILSAFE = True
 
 reader = easyocr.Reader(["pt", "en"])
+
+running = False
 
 
 def screenshot():
@@ -59,6 +82,11 @@ def click_bbox_center(bbox):
 
     y = int((bbox[0][1] + bbox[2][1]) / 2)
 
+    x = int(x / 2)
+    y = int(y / 2)
+
+    pyautogui.moveTo(x, y, duration=0.3)
+
     pyautogui.click(x, y)
 
 
@@ -86,26 +114,147 @@ def open_google_maps():
     wait(6)
 
 
+def wait_for_text(target, timeout=15):
+
+    start = time.time()
+
+    while time.time() - start < timeout:
+        bbox = find_text(target)
+
+        if bbox:
+            return bbox
+
+        time.sleep(1)
+
+    return None
+
+
 def search_petrolina():
 
-    bbox = find_text("Pesquise no Google Maps")
+    bbox = wait_for_text("Pesquise no Google Maps")
 
     if not bbox:
+        print("Campo não encontrado")
+
         return
 
-    pyautogui.write("Petrolina", interval=0.05)
+    click_bbox_center(bbox)
+
+    wait(1)
+
+    pyautogui.write("Petrolina", interval=0.1)
 
     pyautogui.press("enter")
 
 
-def main():
+def run_agent():
 
-    open_chrome()
+    global running
 
-    open_google_maps()
+    running = True
 
-    search_petrolina()
+    update_status("Rodando")
+
+    try:
+        if not running:
+            return
+
+        open_chrome()
+
+        if not running:
+            return
+
+        open_google_maps()
+
+        if not running:
+            return
+
+        search_petrolina()
+
+        update_status("Finalizado")
+
+    except Exception as e:
+        update_status("Erro")
+
+        print(e)
+
+    running = False
 
 
-if __name__ == "__main__":
-    main()
+def start_agent():
+
+    global running
+
+    if running:
+        return
+
+    thread = threading.Thread(target=run_agent, daemon=True)
+
+    thread.start()
+
+
+def stop_agent():
+
+    global running
+
+    running = False
+
+    update_status("Parado")
+
+
+def update_status(text):
+
+    status_label.config(text=f"Status: {text}")
+
+
+keyboard.add_hotkey("ctrl+alt+s", start_agent)
+
+keyboard.add_hotkey("ctrl+alt+x", stop_agent)
+
+
+root = tk.Tk()
+
+root.title("Google Maps Agent")
+
+root.geometry("350x350")
+
+root.resizable(False, False)
+
+title = tk.Label(root, text="Google Maps Agent", font=("Arial", 18, "bold"))
+
+title.pack(pady=20)
+
+
+status_label = tk.Label(root, text="Status: Parado", font=("Arial", 12))
+
+status_label.pack(pady=10)
+
+
+start_button = tk.Button(
+    root,
+    text="Iniciar",
+    width=20,
+    height=2,
+    bg="green",
+    fg="white",
+    command=start_agent,
+)
+
+start_button.pack(pady=10)
+
+
+stop_button = tk.Button(
+    root, text="Parar", width=20, height=2, bg="red", fg="white", command=stop_agent
+)
+
+stop_button.pack(pady=10)
+
+
+info_label = tk.Label(
+    root, text=("CTRL + ALT + S → iniciar\nCTRL + ALT + X → parar"), font=("Arial", 9)
+)
+
+info_label.pack(pady=15)
+
+
+root.mainloop()
