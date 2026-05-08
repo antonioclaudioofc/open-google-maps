@@ -5,12 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "easyocr>=1.7.2",
-    "keyboard>=0.13.5",
-    "mss>=10.2.0",
-    "numpy>=2.4.4",
-    "opencv-python>=4.13.0.92",
-    "pillow>=12.2.0",
-    "pyautogui>=0.9.54",
-    "pyinstaller>=6.20.0",
+   "browser-use==0.1.40",
+   "langchain-ollama==0.2.2",
+   "pytest-playwright>=0.7.2",
 ]
