@@ -1,11 +1,14 @@
 [project]
 name = "open-google-maps"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+version = "0.0.1"
+description = "Open Google Maps"
 requires-python = ">=3.12"
+authors = [
+    { name = "Antonio Claudio" }
+]
 dependencies = [
-   "browser-use==0.1.40",
-   "langchain-ollama==0.2.2",
-   "pytest-playwright>=0.7.2",
+    "groq>=1.2.0",
+    "ipykernel>=7.2.0",
+    "jupyterlab>=4.5.7",
+    "python-dotenv>=1.2.2",
 ]
